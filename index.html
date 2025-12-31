@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bikash Saha</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Typed.js for text animation -->
+    <script src="https://unpkg.com/typed.js@2.0.16/dist/typed.umd.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --accent-glow: rgba(99, 102, 241, 0.6); /* Indigo glow */
+        }
+
+        .light-theme {
+            --bg-color: #F2F2F7;
+            --text-color: #1C1C1E;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --card-border: rgba(0, 0, 0, 0.05);
+            --accent-glow: rgba(99, 102, 241, 0.4);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.7s ease, color 0.7s ease;
+            overflow-x: hidden;
+            /* cursor: none;  <-- REMOVED per request so default cursor shows */
+        }
+
+        /* Revert cursor for touch devices */
+        @media (pointer: coarse) {
+            #cursor-glow {
+                display: none;
+            }
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 2.5rem;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-card:hover {
+            transform: scale(1.02) translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        .animate-pulse-slow { animation: pulse-slow 12s infinite; }
+
+        /* Animation Classes */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .nav-active {
+            background: rgba(255,255,255,0.2);
+            color: white !important;
+            transform: scale(1.1);
+        }
+
+        .light-theme .nav-active {
+            background: rgba(0,0,0,0.05);
+            color: black !important;
+        }
+
+        /* --- FEATURE: Cursor Glow (From Index.html) --- */
+        #cursor-glow {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-glow);
+            filter: blur(20px);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, background-color 0.3s;
+            z-index: 9999;
+            opacity: 0.6;
+        }
+
+        /* --- FEATURE: Slide Bar / Mobile Menu (From Index.html) --- */
+        #mobile-menu {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(30px);
+            background: var(--bg-color); /* Match theme */
+            border-right: 1px solid var(--card-border);
+        }
+        
+        .mobile-link {
+            position: relative;
+            overflow: hidden;
+        }
+        .mobile-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: currentColor;
+            transition: width 0.3s;
+        }
+        .mobile-link:hover::after {
+            width: 100%;
+        }
+
+        /* --- FEATURE: Back to Top (From Index.html) --- */
+        #back-to-top {
+            transition: all 0.3s ease;
+            background: var(--text-color);
+            color: var(--bg-color);
+        }
+    </style>
+</head>
+<body class="dark-theme">
+
+    <!-- Feature: Cursor Glow -->
+    <div id="cursor-glow"></div>
+
+    <!-- Ambient Background -->
+    <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-indigo-600/15 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-purple-600/15 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Theme Switcher & Mobile Menu Toggle -->
+    <div class="fixed top-6 right-6 z-50 flex gap-4">
+        <!-- Feature: Mobile Menu Toggle -->
+        <button id="menu-btn" class="glass-card p-4 rounded-2xl active:scale-90 flex items-center justify-center md:hidden">
+            <i data-lucide="menu"></i>
+        </button>
+        <!-- Theme Toggle -->
+        <button onclick="toggleTheme()" class="glass-card p-4 rounded-2xl active:scale-90 flex items-center justify-center">
+            <i id="theme-icon" data-lucide="sun" class="text-yellow-400"></i>
+        </button>
+    </div>
+
+    <!-- Feature: Slide Bar (Mobile Menu) -->
+    <div id="mobile-menu" class="fixed top-0 left-0 h-full w-[80%] max-w-sm z-[60] transform -translate-x-full p-8 flex flex-col justify-between shadow-2xl">
+        <div>
+            <div class="flex justify-between items-center mb-12">
+                <h2 class="text-2xl font-bold tracking-tighter">Menu</h2>
+                <button id="close-menu-btn" class="p-2 opacity-60 hover:opacity-100 transition-opacity">
+                    <i data-lucide="x" size="32"></i>
+                </button>
+            </div>
+            <nav class="space-y-8 flex flex-col">
+                <a href="#home" class="mobile-link text-3xl font-light" onclick="closeMenu()">Home</a>
+                <a href="#academics" class="mobile-link text-3xl font-light" onclick="closeMenu()">Academics</a>
+                <a href="#education" class="mobile-link text-3xl font-light" onclick="closeMenu()">Education</a>
+                <a href="#contact" class="mobile-link text-3xl font-light" onclick="closeMenu()">Contact</a>
+            </nav>
+        </div>
+        <div class="opacity-30 text-xs">
+            © 2025 Bikash Saha<br>
+        </div>
+    </div>
+
+    <!-- Feature: Bottom Navigation (Kept as requested "not the ui expect the slide bar" - keeping original UI) -->
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 hidden md:flex">
+        <div class="flex items-center gap-2 p-2 glass-card rounded-full shadow-2xl">
+            <button onclick="scrollToId('home')" class="p-4 rounded-full text-gray-500 transition-all nav-btn" data-section="home"><i data-lucide="trending-up"></i></button>
+            <button onclick="scrollToId('academics')" class="p-4 rounded-full text-gray-500 transition-all nav-btn" data-section="academics"><i data-lucide="book-open"></i></button>
+            <button onclick="scrollToId('education')" class="p-4 rounded-full text-gray-500 transition-all nav-btn" data-section="education"><i data-lucide="graduation-cap"></i></button>
+            <button onclick="scrollToId('contact')" class="p-4 rounded-full text-gray-500 transition-all nav-btn" data-section="contact"><i data-lucide="phone"></i></button>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-8 space-y-32 md:space-y-48 pt-20">
+        
+        <!-- Hero Section -->
+        <section id="home" class="reveal min-h-[80vh] flex flex-col justify-center">
+            <header class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
+                <div class="space-y-6 w-full">
+                    <div class="flex flex-wrap gap-3">
+                        <span class="px-4 py-1.5 rounded-full border border-indigo-500/30 text-[10px] font-bold uppercase tracking-widest text-indigo-400">Individual Portfolio</span>
+                    </div>
+                    <!-- CHANGED: Reduced font size from text-[9rem] to text-7xl for better balance -->
+                    <h1 class="text-6xl md:text-7xl font-extrabold tracking-tighter leading-none">Bikash Saha</h1>
+                    
+                    <!-- Feature: Typed.js Text -->
+                    <div class="h-20 md:h-24">
+                        <p class="text-xl md:text-3xl font-light opacity-60 max-w-2xl">
+                            <span id="typed-subtitle"></span>
+                        </p>
+                    </div>
+                </div>
+                <!-- Removed Credentials Option as requested -->
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="glass-card p-10 md:col-span-2 space-y-8 flex flex-col items-start">
+                    <!-- CHANGED: Reverted to original "BS" block instead of image -->
+                    <div class="w-16 h-16 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-2xl font-black text-indigo-400">BS</div>
+                    
+                    <div>
+                        <h3 class="text-3xl font-bold mb-2">The Academic Professional</h3>
+                        <p class="opacity-60 text-lg">Guiding students at Bolpur College for over 12 years, I am a professor of the subject Economics, loved by hundreds of students.</p>
+                    </div>
+                </div>
+                <div class="glass-card p-10 md:col-span-2 relative overflow-hidden flex flex-col justify-center min-h-[300px]">
+                    <i data-lucide="trending-up" class="absolute -right-10 -bottom-10 size-64 opacity-5"></i>
+                    <h3 class="text-2xl font-bold mb-4">Core Areas</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-white/10 transition-colors cursor-default">Macro Theory</span>
+                        <span class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-white/10 transition-colors cursor-default">Public Finance</span>
+                        <span class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-white/10 transition-colors cursor-default">Rural Policy</span>
+                        <span class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-white/10 transition-colors cursor-default">Econometrics</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Academics -->
+        <section id="academics" class="reveal">
+            <div class="mb-12">
+                <h4 class="text-indigo-500 font-black tracking-widest text-xs uppercase mb-2">Philosophy</h4>
+                <h2 class="text-4xl md:text-6xl font-bold">Academic Impact</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass-card p-10 bg-indigo-500/5 group">
+                    <div class="p-4 bg-indigo-500/10 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="book-open" class="text-indigo-500" size="32"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Teaching Vision</h3>
+                    <p class="opacity-60 text-lg">"I aim to turn complex data into stories of human progress, making economics accessible to every student."</p>
+                </div>
+                <div class="glass-card p-10 bg-purple-500/5 group">
+                    <div class="p-4 bg-purple-500/10 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="award" class="text-purple-500" size="32"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Key Expertise</h3>
+                    <ul class="space-y-3 opacity-70">
+                        <li class="flex items-center gap-2"><i data-lucide="check" size="14" class="text-purple-500"></i> Development Economics</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" size="14" class="text-purple-500"></i> Indian Economic Policy</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" size="14" class="text-purple-500"></i> Quantitative Analysis</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Education -->
+        <section id="education" class="reveal">
+            <div class="mb-12">
+                <h4 class="text-purple-500 font-black tracking-widest text-xs uppercase mb-2">History</h4>
+                <h2 class="text-4xl md:text-6xl font-bold">Educational Roots</h2>
+            </div>
+            <div class="glass-card p-8 md:p-16">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div class="space-y-10 border-l-2 border-indigo-500/30 pl-8 relative">
+                        <div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/50"></div>
+                        <div>
+                            <h3 class="text-xl font-bold">4. Master of Arts (M.A.)</h3>
+                            <p class="text-indigo-500 font-bold">Economics • Completed</p>
+                            <p class="text-sm opacity-50 mt-1">Specialization in Advanced Economic Theory</p>
+                        </div>
+                        <div class="absolute -left-[11px] top-[120px] w-5 h-5 rounded-full bg-indigo-500/30"></div>
+                        <div>
+                            <h3 class="text-xl font-bold">3. Bachelor of Education (B.Ed.)</h3>
+                            <p class="text-indigo-500 font-bold">Professional • Completed</p>
+                        </div>
+                    </div>
+                    <div class="space-y-10 border-l-2 border-purple-500/30 pl-8 relative">
+                         <div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-purple-500 shadow-lg shadow-purple-500/50"></div>
+                        <div>
+                            <h3 class="text-xl font-bold">2. College Graduation</h3>
+                            <p class="text-purple-500 font-bold">Visva Bharati</p>
+                            <p class="text-sm opacity-50 mt-1">B.A. Economics Honours</p>
+                        </div>
+                        <div class="absolute -left-[11px] top-[120px] w-5 h-5 rounded-full bg-purple-500/30"></div>
+                        <div>
+                            <h3 class="text-xl font-bold">1. Schooling</h3>
+                            <p class="text-purple-500 font-bold">Science Stream</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact" class="reveal pb-20">
+            <div class="text-center space-y-6">
+                <h2 class="text-5xl md:text-7xl font-bold">Let's Connect</h2>
+                <p class="opacity-50 text-xl">Reach out for academic collaborations or inquiries.</p>
+                <div class="flex flex-wrap justify-center gap-6 mt-12">
+                    <a href="tel:9475454458" class="glass-card p-8 flex flex-col items-center w-64 hover:bg-green-500/10 group">
+                        <div class="p-4 bg-green-500/10 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="phone" class="text-green-500"></i>
+                        </div>
+                        <span class="font-bold">Call Me</span>
+                        <span class="opacity-60 text-sm mt-1">+91 9475454458</span>
+                    </a>
+                    <a href="mailto:sahabikash2011@gmail.com" class="glass-card p-8 flex flex-col items-center w-64 hover:bg-rose-500/10 group">
+                        <div class="p-4 bg-rose-500/10 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="mail" class="text-rose-500"></i>
+                        </div>
+                        <span class="font-bold">Email</span>
+                        <span class="opacity-60 text-sm mt-1">sahabikash2011@gmail.com</span>
+                    </a>
+                    <a href="https://www.facebook.com/share/171BRjvMTh/" target="_blank" class="glass-card p-8 flex flex-col items-center w-64 hover:bg-blue-600/10 group">
+                        <div class="p-4 bg-blue-600/10 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="facebook" class="text-blue-600"></i>
+                        </div>
+                        <span class="font-bold">Facebook</span>
+                        <span class="opacity-60 text-sm mt-1">Bikash Saha</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-12 text-center opacity-30 text-sm border-t border-white/5">
+        <p>© 2025 Bikash Saha</p>
+    </footer>
+
+    <!-- Feature: Back to Top Button (From Index.html) -->
+    <button id="back-to-top" class="fixed bottom-24 md:bottom-8 right-8 p-4 rounded-full shadow-lg opacity-0 pointer-events-none translate-y-10 transition-all z-40">
+        <i data-lucide="arrow-up"></i>
+    </button>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Theme Toggle
+        let isDark = true;
+        function toggleTheme() {
+            isDark = !isDark;
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            
+            if (isDark) {
+                body.classList.remove('light-theme');
+                icon.setAttribute('data-lucide', 'sun');
+                icon.className = 'text-yellow-400';
+            } else {
+                body.classList.add('light-theme');
+                icon.setAttribute('data-lucide', 'moon');
+                icon.className = 'text-indigo-600';
+            }
+            lucide.createIcons();
+        }
+
+        // --- FEATURE: Slide Bar / Mobile Menu Logic ---
+        const menuBtn = document.getElementById('menu-btn');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        function openMenu() {
+            mobileMenu.classList.remove('-translate-x-full');
+        }
+        function closeMenu() {
+            mobileMenu.classList.add('-translate-x-full');
+        }
+
+        if(menuBtn) menuBtn.addEventListener('click', openMenu);
+        if(closeMenuBtn) closeMenuBtn.addEventListener('click', closeMenu);
+
+
+        // --- FEATURE: Intersection Observer for Reveal (Improved performance) ---
+        const revealElements = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    // Optional: Stop observing once revealed
+                    // observer.unobserve(entry.target); 
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        revealElements.forEach(el => observer.observe(el));
+
+
+        // --- FEATURE: Typed.js Animation ---
+        new Typed('#typed-subtitle', {
+            strings: [
+                'Teaching Economics at <span class="text-indigo-500 font-semibold">Bolpur College</span>.', 
+                'Empowering minds through social science.',
+                'Analyzing micro-economic trends.',
+                'Fostering rural development.'
+            ],
+            typeSpeed: 30,
+            backSpeed: 15,
+            backDelay: 2000,
+            loop: true,
+            smartBackspace: true
+        });
+
+        // --- FEATURE: Back to Top & Nav Highlight ---
+        const backToTopBtn = document.getElementById('back-to-top');
+        
+        window.addEventListener('scroll', () => {
+            let current = '';
+            const sections = document.querySelectorAll('section');
+            const scrollY = window.pageYOffset;
+
+            // Nav Highlight Logic
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 300) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('nav-active');
+                if (btn.getAttribute('data-section') === current) {
+                    btn.classList.add('nav-active');
+                }
+            });
+
+            // Back to Top Logic
+            if (scrollY > 500) {
+                backToTopBtn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-10');
+            } else {
+                backToTopBtn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-10');
+            }
+        });
+
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        function scrollToId(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- FEATURE: Cursor Glow (Mouse Follower) ---
+        const cursorGlow = document.getElementById('cursor-glow');
+        
+        // Only activate on devices with fine pointers (mouse) to avoid issues on touch
+        if (window.matchMedia('(pointer: fine)').matches && cursorGlow) {
+            window.addEventListener('mousemove', (e) => {
+                // Use requestAnimationFrame for smoother performance
+                requestAnimationFrame(() => {
+                    cursorGlow.style.left = e.clientX + 'px';
+                    cursorGlow.style.top = e.clientY + 'px';
+                });
+            });
+
+            // Optional: Expand cursor on hoverable elements
+            const hoverables = document.querySelectorAll('a, button, .glass-card');
+            hoverables.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    cursorGlow.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                    cursorGlow.style.background = 'rgba(99, 102, 241, 0.4)';
+                });
+                el.addEventListener('mouseleave', () => {
+                    cursorGlow.style.transform = 'translate(-50%, -50%) scale(1)';
+                    cursorGlow.style.background = 'var(--accent-glow)';
+                });
+            });
+        }
+    </script>
+</body>
+</html>
